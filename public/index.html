@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Mensagens Criptografadas</title>
+</head>
+<body>
+  <h1>Mensagens Criptografadas</h1>
+  <form id="formulario">
+    <input type="text" id="mensagem" placeholder="Digite uma mensagem" required />
+    <input type="hidden" id="csrf" name="_csrf" />
+    <button type="submit">Enviar</button>
+  </form>
+  <h2>Mensagens Enviadas</h2>
+  <ul id="mensagens"></ul>
+
+  <script>
+    async function obterCsrf() {
+      const res = await fetch('/csrf-token');
+      const data = await res.json();
+      document.getElementById('csrf').value = data.csrfToken;
+    }
+
+    async function carregarMensagens() {
+      const res = await fetch('/messages');
+      const data = await res.json();
+      const lista = document.getElementById('mensagens');
+      lista.innerHTML = '';
+      data.messages.forEach(msg => {
+        const li = document.createElement('li');
+        li.textContent = msg;
+        lista.appendChild(li);
+      });
+    }
+
+    document.getElementById('formulario').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await fetch('/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: document.getElementById('mensagem').value,
+          _csrf: document.getElementById('csrf').value
+        })
+      });
+      document.getElementById('mensagem').value = '';
+      carregarMensagens();
+    });
+
+    obterCsrf();
+    carregarMensagens();
+  </script>
+</body>
+</html>
